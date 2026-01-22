@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import PoseCard from '@/components/PoseCard';
 import { seedPoses } from '@/data/poses';
-import { Pose } from '@/lib/types';
 
 export default function PosesPage() {
   const [searchQuery, setSearchQuery] = useState('');

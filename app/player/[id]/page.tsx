@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Routine, RoutineItem, SessionState, Pose } from '@/lib/types';
+import { Routine, SessionState } from '@/lib/types';
 import { seedPoses } from '@/data/poses';
 import { getRoutineById, getSessionState, saveSessionState, clearSessionState, getSettings } from '@/lib/storage';
 import { formatTime } from '@/lib/utils';
@@ -26,10 +26,8 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
   const [isResting, setIsResting] = useState(false);
   const [restTimeRemaining, setRestTimeRemaining] = useState(10);
 
-  const transitionAudioRef = useRef<HTMLAudioElement | null>(null);
-  const warningAudioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const restMusicRef = useRef<HTMLAudioElement | null>(null);
+  const restMusicRef = useRef<AudioContext | null>(null);
   const voiceGuideRef = useRef<VoiceGuide | null>(null);
   const hasAnnouncedPoseRef = useRef(false);
   const sessionStartedRef = useRef(false);
@@ -201,6 +199,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
         clearInterval(timerRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routine, isPaused, isComplete, warningPlayed, isResting, currentItemIndex]);
 
   // Save session state
@@ -367,20 +366,19 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
     // Store context for cleanup
     if (restMusicRef.current) {
       try {
-        (restMusicRef.current as any).close();
-      } catch (e) {
+        restMusicRef.current.close();
+      } catch {
         // Ignore if already closed
       }
     }
-    restMusicRef.current = audioContext as any;
+    restMusicRef.current = audioContext;
   }, []);
 
   const stopRestMusic = useCallback(() => {
     if (restMusicRef.current) {
       try {
-        const audioContext = restMusicRef.current as any;
-        if (audioContext.state !== 'closed') {
-          audioContext.close();
+        if (restMusicRef.current.state !== 'closed') {
+          restMusicRef.current.close();
         }
       } catch (e) {
         console.error('Error stopping rest music:', e);
@@ -388,39 +386,6 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
       restMusicRef.current = null;
     }
   }, []);
-
-  const handleNextPose = useCallback((autoAdvance = false) => {
-    if (!routine) return;
-
-    if (autoAdvance) {
-      playTransitionChime();
-    }
-
-    const nextIndex = currentItemIndex + 1;
-
-    if (nextIndex >= routine.items.length) {
-      // Session complete
-      setIsComplete(true);
-      clearSessionState();
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      if (voiceGuideRef.current) {
-        voiceGuideRef.current.announceComplete();
-      }
-      return;
-    }
-
-    setCurrentItemIndex(nextIndex);
-    setRemainingTime(routine.items[nextIndex].duration);
-    setWarningPlayed(false);
-    hasAnnouncedPoseRef.current = false; // Reset for next pose announcement
-
-    // Reset voice announcement tracker for new pose
-    if (voiceGuideRef.current) {
-      voiceGuideRef.current.resetAnnouncementTracker();
-    }
-  }, [routine, currentItemIndex, playTransitionChime]);
 
   const handleRestart = useCallback(() => {
     if (!routine) return;

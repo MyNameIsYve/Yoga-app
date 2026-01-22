@@ -45,12 +45,6 @@ export default function QuickStartPage() {
     });
   };
 
-  const getDifficultyLevel = () => {
-    if (preference.x < -0.4) return 'beginner';
-    if (preference.x > 0.4) return 'advanced';
-    return 'intermediate';
-  };
-
   const getTrainingStyle = () => {
     if (preference.y < -0.4) return 'intense';
     if (preference.y > 0.4) return 'relaxing';

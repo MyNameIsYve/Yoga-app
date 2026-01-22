@@ -9,7 +9,7 @@ import { getRoutineById, updateRoutine } from '@/lib/storage';
 import { generateId, calculateRoutineDuration, formatDuration, validateRoutine } from '@/lib/utils';
 import PoseCard from '@/components/PoseCard';
 
-export default function EditRoutinePage({ params }: { params: { id: string } }) {
+export default function EditRoutinePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
@@ -19,9 +19,17 @@ export default function EditRoutinePage({ params }: { params: { id: string } }) 
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [routineId, setRoutineId] = useState<string | null>(null);
+
+  // Unwrap params
+  useEffect(() => {
+    params.then((p) => setRoutineId(p.id));
+  }, [params]);
 
   useEffect(() => {
-    const routine = getRoutineById(params.id);
+    if (!routineId) return;
+
+    const routine = getRoutineById(routineId);
     if (routine) {
       setName(routine.name);
       setDescription(routine.description || '');
@@ -30,7 +38,7 @@ export default function EditRoutinePage({ params }: { params: { id: string } }) 
       setNotFound(true);
     }
     setLoading(false);
-  }, [params.id]);
+  }, [routineId]);
 
   const filteredPoses = seedPoses.filter(pose =>
     pose.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -75,6 +83,8 @@ export default function EditRoutinePage({ params }: { params: { id: string } }) 
   }
 
   function handleSave() {
+    if (!routineId) return;
+
     const totalDuration = calculateRoutineDuration(items);
     const updates: Partial<Routine> = {
       name: name.trim(),
@@ -83,13 +93,13 @@ export default function EditRoutinePage({ params }: { params: { id: string } }) 
       totalDuration,
     };
 
-    const validationError = validateRoutine({ ...updates, id: params.id, createdAt: '', updatedAt: '' });
+    const validationError = validateRoutine({ ...updates, id: routineId, createdAt: '', updatedAt: '' });
     if (validationError) {
       setError(validationError);
       return;
     }
 
-    updateRoutine(params.id, updates);
+    updateRoutine(routineId, updates);
     router.push('/routines');
   }
 

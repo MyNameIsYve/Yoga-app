@@ -176,9 +176,8 @@ export class VoiceGuide {
     utterance.lang = 'en-GB'; // UK English for more soothing, steady voice
 
     // These properties help make speech more natural
-    // @ts-ignore - some browsers support these
     if ('emphasis' in utterance) {
-      utterance.emphasis = 'moderate';
+      (utterance as SpeechSynthesisUtterance & { emphasis?: string }).emphasis = 'moderate';
     }
 
     // Add event handlers
@@ -276,7 +275,7 @@ export class VoiceGuide {
   }
 
   // Simple countdown for final seconds (DEPRECATED - use announceTimeRemaining instead)
-  announceCountdown(seconds: number) {
+  announceCountdown() {
     // This method is no longer used to prevent duplicate announcements
     // announceTimeRemaining handles all countdown announcements
   }

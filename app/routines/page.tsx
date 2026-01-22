@@ -135,7 +135,7 @@ export default function RoutinesPage() {
                 {deleteConfirm === routine.id && (
                   <div className="mt-4 p-4 bg-red-900/30 border-2 border-red-500 rounded-lg">
                     <p className="text-white font-semibold mb-3">
-                      Are you sure you want to delete "{routine.name}"?
+                      Are you sure you want to delete &quot;{routine.name}&quot;?
                     </p>
                     <div className="flex gap-2">
                       <button
